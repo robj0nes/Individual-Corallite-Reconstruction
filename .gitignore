@@ -1,0 +1,5 @@
+*.pth
+*.ckpt*
+*.hdf5
+*.npz
+wandb*
