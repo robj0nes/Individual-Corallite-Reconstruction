@@ -162,6 +162,8 @@ if __name__ == '__main__':
     listDir = f"{rootDir}/training_data/data_lists"
 
     snippet_dir = f"{rootDir}/training_data/snippets"
+    for subdir in ['train', 'test', 'all']:
+        os.makedirs(f"{snippet_dir}/{subdir}", exist_ok=True)
     check_dir = f"{rootDir}/training_data/snippet_checks"
 
     # Use this block for full sequence images/annotations in separate directories.

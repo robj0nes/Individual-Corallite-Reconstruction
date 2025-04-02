@@ -1,9 +1,13 @@
 import argparse
 import os
+import platform
 import random
 import numpy as np
 import torch
-import torch.backends.cudnn as cudnn
+
+if torch.cuda.is_available():
+    import torch.backends.cudnn as cudnn
+
 from networks.vit_seg_modeling import VisionTransformer as ViT_seg
 from networks.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
 from trainer import trainer_coral
@@ -55,17 +59,19 @@ parser.add_argument("--nowarmup", type=bool, default=False, help="Turn off warmu
 args = parser.parse_args()
 
 if __name__ == "__main__":
-    if not args.deterministic:
-        cudnn.benchmark = True
-        cudnn.deterministic = False
-    else:
-        cudnn.benchmark = False
-        cudnn.deterministic = True
+    if torch.cuda.is_available():
+        if not args.deterministic:
+            cudnn.benchmark = True
+            cudnn.deterministic = False
+        else:
+            cudnn.benchmark = False
+            cudnn.deterministic = True
 
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed(args.seed)
+    device = 'cuda' if torch.cuda.is_available() else 'mps' if platform.system() == "Darwin" else 'cpu'
     dataset_name = args.dataset
 
     # The below config will either overwrite the command line args, or provide a way to set them in-script.
@@ -73,7 +79,7 @@ if __name__ == "__main__":
         'Coral': {
             'root_path': '../../data/example_species',
             'list_dir': '../../data/example_species/training_data/data_lists',
-            'model_path': '../model/vit_checkpoint/coral_pretrain/coral_pretrain.pth',
+            'model_path': '../model/vit_checkpoint/imagenet21k/R50-ViT-B_16.npz',
             'cuda': False,
             'wandb': False,
             'num_classes': 1,
@@ -125,16 +131,19 @@ if __name__ == "__main__":
     else:
         config_vit.vis_path = None
 
-    config_vit['freeze'] = ['tcm']
+    # config_vit['freeze'] = ['tcm']
+    config_vit['freeze'] = []
 
     if args.vit_name.find('R50') != -1:
         config_vit.patches.grid = (
-        int(args.img_size / args.vit_patches_size), int(args.img_size / args.vit_patches_size))
+            int(args.img_size / args.vit_patches_size),
+            int(args.img_size / args.vit_patches_size)
+        )
 
-    if args.cuda:
-        net = ViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
-    else:
-        net = ViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes)
+    # if args.cuda:
+    #     net = ViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
+    # else:
+    net = ViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).to(device)
 
     if '.npz' in config_vit.pretrained_path:
         net.load_from(weights=np.load(config_vit.pretrained_path))
@@ -142,7 +151,7 @@ if __name__ == "__main__":
         if args.cuda:
             net.load_state_dict(torch.load(config_vit.pretrained_path))
         else:
-            net.load_state_dict(torch.load(config_vit.pretrained_path, map_location=torch.device('cpu')))
+            net.load_state_dict(torch.load(config_vit.pretrained_path, map_location=torch.device(device)))
     else:
         print("Unable to load pre-trained model")
         exit(1)

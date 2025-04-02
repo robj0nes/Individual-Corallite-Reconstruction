@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import platform
 import random
 import sys
 
@@ -176,12 +177,14 @@ if __name__ == "__main__":
         config_vit.patches.grid = (
         int(args.img_size / args.vit_patches_size), int(args.img_size / args.vit_patches_size))
 
+    device = 'cuda' if torch.cuda.is_available() else 'mps' if platform.system() == 'Darwin' else 'cpu'
+
     if args.cuda:
         net = ViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
         net.load_state_dict(torch.load(snapshot.replace('\\', '/')))
     else:
         net = ViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes)
-        net.load_state_dict(torch.load(snapshot.replace('\\', '/'), map_location=torch.device('cpu')))
+        net.load_state_dict(torch.load(snapshot.replace('\\', '/'), map_location=torch.device(device)))
 
     snapshot_name = snapshot.split('/')[-2]
 

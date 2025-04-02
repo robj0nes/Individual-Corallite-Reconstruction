@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from mmcv.cnn import constant_init, kaiming_init
+from mmengine.model import constant_init, kaiming_init
 
 
 def last_zero_init(m):

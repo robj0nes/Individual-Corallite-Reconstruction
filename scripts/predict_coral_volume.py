@@ -1,6 +1,7 @@
 import argparse
 import datetime
 import os
+import pathlib
 
 import cv2
 import numpy as np
@@ -129,9 +130,10 @@ def predict_volume(volume_dir, save_dir, dims, cuda, model=None, model_path=None
 
 
 if __name__ == '__main__':
-    root = args.root
-    vol_dir = f"{root}/complete_raw"
-    save_dir = f"{root}/predictions"
+    root = pathlib.Path(__file__).parent.parent.absolute()
+    data_dir = f"{root}/data/example_species"
+    vol_dir = f"{data_dir}/complete_raw"
+    save_dir = f"{data_dir}/predictions"
     os.makedirs(save_dir, exist_ok=True)
     if args.ckpt is None:
         print("Please ensure a path to model checkpoint is provided")

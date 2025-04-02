@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import platform
 import random
 import sys
 import time
@@ -62,12 +63,12 @@ def loss_epoch(dataloader, model, dice_loss, topo_loss, args, epoch_num, optimiz
     running_coral_metric = 0.0
     running_topological_metric = 0.0
 
+    device = 'cuda' if torch.cuda.is_available() else 'mps' if platform.system() == 'Darwin' else 'cpu'
     len_data = len(dataloader.dataset)
     for i_batch, sampled_batch in enumerate(dataloader):
-        image_batch, label_batch = sampled_batch['image'], sampled_batch['label']
-        if args.cuda:
-            image_batch, label_batch = image_batch.cuda(), label_batch.cuda()
-
+        image_batch, label_batch = sampled_batch['image'].to(device), sampled_batch['label'].to(device)
+        # if args.cuda:
+        #     image_batch, label_batch = image_batch.cuda(), label_batch.cuda()
 
         outputs = model(image_batch)
         loss_ce = F.binary_cross_entropy_with_logits(outputs[:, 0, :, :], label_batch[:, 0, :, :].float())
@@ -143,9 +144,11 @@ def trainer_coral(args, model, snapshot_path):
     from torch.utils.data import Subset
     from torchvision import transforms
     from torch.utils.data import DataLoader
+    device = 'cuda' if torch.cuda.is_available() else 'mps' if platform.system() == 'Darwin' else 'cpu'
     db_train = Coral_dataset(base_dir=f"{args.root_path}/training_data/snippets", list_dir=args.list_dir, split="train",
                              transform=transforms.Compose(
-                                 [RandomGenerator(output_size=[args.img_size, args.img_size])]))
+                                 [RandomGenerator(output_size=[args.img_size, args.img_size])])
+                             )
     db_val = Coral_dataset(base_dir=f"{args.root_path}/training_data/snippets", list_dir=args.list_dir, split="val", transform=None)
 
     # Split data into train/validation set
