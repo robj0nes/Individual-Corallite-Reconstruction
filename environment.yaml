@@ -1,0 +1,25 @@
+name: coral
+channels:
+  - defaults
+dependencies:
+  - python==3.10
+  - numpy
+  - pip
+  - pip:
+      - h5py
+      - jsonpickle
+      - MedPy
+      - ml_collections
+      - mmcv
+      - pip
+      - scikit-image
+      - scikit-learn
+      - tensorboard
+      - tensorboardX
+      - torchaudio
+      - torchvision
+      - tqdm
+      - tqdn
+      - wandb
+      - wheel
+
